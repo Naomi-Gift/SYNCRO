@@ -164,7 +164,8 @@ All tables are defined with Row Level Security (RLS) policies:
 
 **Required Environment Variables**:
 \`\`\`bash
-SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_URL=your_supaSUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY_ANON_KEY_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 \`\`\`
 

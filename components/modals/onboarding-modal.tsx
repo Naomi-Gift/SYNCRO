@@ -5,9 +5,6 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Mail, Shield, Zap, Plus, X,
 
 export default function OnboardingModal({ onClose, onModeSelect, darkMode = false }) {
   const [step, setStep] = useState(1)
-  const [isOAuthComplete, setIsOAuthComplete] = useState(false)
-  const [oauthProvider, setOauthProvider] = useState<"google" | "microsoft" | "email" | null>(null)
-  const [oauthLoading, setOauthLoading] = useState(false)
   const [connectionMethod, setConnectionMethod] = useState<"gmail" | "plaid" | "manual" | null>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState({ emails: 0, subscriptions: 0, time: 0 })
@@ -73,16 +70,6 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
     }
   }, [isScanning, connectedEmails, foundSubscriptions, selectedSubscriptions])
 
-  const handleOAuthLogin = (provider: "google" | "microsoft" | "email") => {
-    setOauthLoading(true)
-    setOauthProvider(provider)
-    setTimeout(() => {
-      setOauthLoading(false)
-      setIsOAuthComplete(true)
-      setStep(2)
-    }, 800)
-  }
-
   const handleConnectGmail = () => {
     console.log("[v0] Connecting Gmail account...")
     // Simulate Gmail OAuth flow
@@ -103,41 +90,22 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
   }
 
   const handleBack = () => {
-    if (step === 1) {
-      return
+    if (step > 1) {
+      setStep(step - 1)
+      if (step === 3) {
+        setIsScanning(false)
+        setScanProgress({ emails: 0, subscriptions: 0, time: 0 })
+      }
     }
-
-    if (step === 2) {
-      setConnectionMethod(null)
-    }
-
-    if (step === 3) {
-      setIsScanning(false)
-      setScanProgress({ emails: 0, subscriptions: 0, time: 0 })
-    }
-
-    setStep(step - 1)
   }
 
   const handleNext = () => {
-    if (step === 2) {
-      if (connectionMethod === "gmail") {
-        handleConnectGmail()
-        setStep(3)
-        return
-      }
-      if (connectionMethod === "plaid" || connectionMethod === "manual") {
-        setStep(4)
-        return
-      }
-    }
-
-    if (step === 3) {
+    if (step === 2 && connectionMethod === "gmail") {
+      handleConnectGmail()
+      setStep(3)
+    } else if (step === 2 && (connectionMethod === "plaid" || connectionMethod === "manual")) {
       setStep(4)
-      return
-    }
-
-    if (step < 7) {
+    } else if (step < 6) {
       setStep(step + 1)
     }
   }
@@ -162,16 +130,15 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
     .reduce((sum, sub) => sum + sub.cost, 0)
 
   const isStepValid = () => {
-    if (step === 1) return isOAuthComplete
+    if (step === 1) return formData.name && formData.role && formData.toolsCount && formData.monthlySpend
     if (step === 2) return connectionMethod !== null
     if (step === 3) return !isScanning && foundSubscriptions.length > 0
-    if (step === 4) return formData.name && formData.role && formData.toolsCount && formData.monthlySpend
+    if (step === 4) return true
     if (step === 5) return true
-    if (step === 6) return true
     return false
   }
 
-  const progressDots = [1, 2, 3, 4, 5, 6, 7]
+  const progressDots = [1, 2, 3, 4, 5]
 
   const aiTools = foundSubscriptions.filter(
     (sub) => sub.icon === "🤖" || sub.icon === "🖼️" || sub.icon === "💻" || sub.icon === "✨" || sub.icon === "🔍",
@@ -200,53 +167,39 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
   const getLeftContent = () => {
     if (step === 1) {
       return {
-        title: "Secure Sign-In\nTo Get Started",
-        description: "Authenticate with your preferred provider to sync your workspace and keep your data protected.",
+        title: "Welcome to\nSubsync",
+        description:
+          "Track all your subscriptions in one place. Optimize your spending and never miss a renewal again.",
       }
-    }
-
-    if (step === 2) {
+    } else if (step === 2) {
       return {
         title: "Connect Your\nAccounts",
         description: "We'll automatically discover your subscriptions and track your spending across all services.",
       }
-    }
-
-    if (step === 3) {
+    } else if (step === 3) {
       return {
         title: isScanning ? "Scanning\nYour Gmail" : "Setting up\nYour Dashboard",
         description: "We're securely analyzing your emails to find subscription receipts and billing information.",
         showStats: true,
       }
-    }
-
-    if (step === 4) {
-      return {
-        title: "Tell Us\nAbout You",
-        description: "Share a few details so we can personalise insights and recommendations for your workspace.",
-      }
-    }
-
-    if (step === 5) {
+    } else if (step === 4) {
       return {
         title: "Setting up\nYour Dashboard",
         description:
           "We're creating your personalized subscription management dashboard with smart insights and recommendations.",
         showProgress: true,
       }
-    }
-
-    if (step === 6) {
+    } else if (step === 5) {
       return {
         title: "Enable Deep\nUsage Tracking",
         description:
           "Connect your AI tool API keys to track actual usage, get accurate cost predictions, and receive alerts when you're not using paid tools.",
       }
-    }
-
-    return {
-      title: "Choose Your\nAccount Type",
-      description: "Select the plan that works best for you",
+    } else {
+      return {
+        title: "Choose Your\nAccount Type",
+        description: "Select the plan that works best for you",
+      }
     }
   }
 
@@ -328,10 +281,10 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
             >
               <ArrowLeft className="w-5 h-5 text-gray-700" />
             </button>
-            {step <= 7 && <span className="text-sm text-gray-500">Step {step} out of 7</span>}
+            {step <= 5 && <span className="text-sm text-gray-500">Step {step} out of 5</span>}
           </div>
 
-          {step <= 7 && (
+          {step <= 5 && (
             <div className="flex gap-2 mb-8">
               {progressDots.map((dot) => (
                 <div
@@ -343,23 +296,21 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
           )}
 
           <h3 className="text-3xl font-bold text-gray-900 mb-3">
-            {step === 1 && "Sign in to Subsync"}
-            {step === 2 && "Connect Your Accounts"}
+            {step === 1 && "Let's get you started"}
+            {step === 2 && "How would you like to connect?"}
             {step === 3 && "Found Your Subscriptions"}
-            {step === 4 && "Tell us about yourself"}
-            {step === 5 && "Customise Your Experience"}
-            {step === 6 && "Connect Your AI Tools"}
-            {step === 7 && "Choose Your Account Type"}
+            {step === 4 && "Customise Your Experience"}
+            {step === 5 && "Connect Your AI Tools"}
+            {step === 6 && "Choose Your Account Type"}
           </h3>
           <p className="text-gray-600 text-base">
-            {step === 1 && "Authenticate securely to unlock your personalised subscription workspace."}
+            {step === 1 && "First tell us a bit about yourself to personalise your experience"}
             {step === 2 && "Choose the method that works best for you. You can always add more later."}
             {step === 3 &&
               `Great! We discovered ${foundSubscriptions.length} subscriptions across ${connectedEmails.length} email${connectedEmails.length !== 1 ? "s" : ""}. Review and confirm below.`}
-            {step === 4 && "First tell us a bit about yourself to personalise your experience."}
-            {step === 5 && "Let's personalise your dashboard with smart settings and preferences."}
-            {step === 6 && "Add API keys to track actual usage and get accurate insights. This step is optional."}
-            {step === 7 && "Select the plan that works best for you"}
+            {step === 4 && "Let's personalise your dashboard with smart settings and preferences."}
+            {step === 5 && "Add API keys to track actual usage and get accurate insights. This step is optional."}
+            {step === 6 && "Select the plan that works best for you"}
           </p>
         </div>
 
@@ -367,81 +318,83 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
         <div className="flex-1 overflow-y-auto mb-8">
           {step === 1 && (
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-lg border border-gray-200">
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">Sign in with your preferred provider</h4>
-                <p className="text-sm text-gray-600">
-                  We use secure OAuth flows to connect your account. You can add more authentication methods anytime
-                  from Settings.
-                </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">What is your name?</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter your name"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                />
               </div>
 
-              <div className="space-y-3">
-                <button
-                  onClick={() => handleOAuthLogin("google")}
-                  disabled={oauthLoading}
-                  className={`w-full py-3 px-4 border-2 rounded-lg flex items-center justify-between text-sm font-medium transition-all ${
-                    oauthProvider === "google" ? "border-gray-900 bg-white" : "border-gray-300 bg-white hover:border-gray-400"
-                  } ${oauthLoading ? "opacity-80 cursor-wait" : ""}`}
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="text-xl">🟦</span>
-                    Continue with Google
-                  </span>
-                  <span className="text-gray-500">
-                    {oauthLoading && oauthProvider === "google" ? "Connecting…" : "OAuth"}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => handleOAuthLogin("microsoft")}
-                  disabled={oauthLoading}
-                  className={`w-full py-3 px-4 border-2 rounded-lg flex items-center justify-between text-sm font-medium transition-all ${
-                    oauthProvider === "microsoft"
-                      ? "border-gray-900 bg-white"
-                      : "border-gray-300 bg-white hover:border-gray-400"
-                  } ${oauthLoading ? "opacity-80 cursor-wait" : ""}`}
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="text-xl">🟩</span>
-                    Continue with Microsoft 365
-                  </span>
-                  <span className="text-gray-500">
-                    {oauthLoading && oauthProvider === "microsoft" ? "Connecting…" : "SSO"}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => handleOAuthLogin("email")}
-                  disabled={oauthLoading}
-                  className={`w-full py-3 px-4 border-2 rounded-lg flex items-center justify-between text-sm font-medium transition-all ${
-                    oauthProvider === "email" ? "border-gray-900 bg-white" : "border-gray-300 bg-white hover:border-gray-400"
-                  } ${oauthLoading ? "opacity-80 cursor-wait" : ""}`}
-                >
-                  <span className="flex items-center gap-3">
-                    <Mail className="w-4 h-4 text-gray-600" />
-                    Continue with Email
-                  </span>
-                  <span className="text-gray-500">
-                    {oauthLoading && oauthProvider === "email" ? "Connecting…" : "Secure link"}
-                  </span>
-                </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">What is your Role?</label>
+                <input
+                  type="text"
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  placeholder="e.g., Product Manager, Developer"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                />
               </div>
 
-              {isOAuthComplete && oauthProvider && (
-                <div className="p-4 bg-[#007A5C]/10 border border-[#007A5C]/20 rounded-lg flex items-center gap-2 text-sm text-[#007A5C] font-medium">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Signed in with{" "}
-                  {oauthProvider === "google"
-                    ? "Google"
-                    : oauthProvider === "microsoft"
-                      ? "Microsoft 365"
-                      : "Email & Password"}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  How many subscriptions do you currently have?
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {["1-5 subscriptions", "6-10 subscriptions", "11-20 subscriptions", "20+ subscriptions"].map(
+                    (option) => (
+                      <button
+                        key={option}
+                        onClick={() => setFormData({ ...formData, toolsCount: option })}
+                        className={`p-4 rounded-lg border-2 font-medium transition-all ${
+                          formData.toolsCount === option
+                            ? "border-gray-900 bg-gray-50 text-gray-900"
+                            : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ),
+                  )}
                 </div>
-              )}
+              </div>
 
-              <p className="text-xs text-gray-500">
-                By continuing, you agree to Subsync&apos;s Terms of Service and acknowledge our Privacy Policy.
-              </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">How many of those are AI tools?</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {["None", "1-3 AI tools", "4-7 AI tools", "8+ AI tools"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => setFormData({ ...formData, aiToolsCount: option })}
+                      className={`p-4 rounded-lg border-2 font-medium transition-all ${
+                        formData.aiToolsCount === option
+                          ? "border-gray-900 bg-gray-50 text-gray-900"
+                          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Approximate monthly spend on all subscriptions
+                </label>
+                <input
+                  type="text"
+                  value={formData.monthlySpend}
+                  onChange={(e) => setFormData({ ...formData, monthlySpend: e.target.value })}
+                  placeholder="e.g., $200"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                />
+                <p className="text-xs text-gray-500 mt-2">This helps us provide better insights</p>
+              </div>
             </div>
           )}
 
@@ -648,88 +601,6 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
             </div>
           )}
 
-          {step === 5 && (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">What is your name?</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter your name"
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">What is your role?</label>
-                <input
-                  type="text"
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  placeholder="e.g., Product Manager, Developer"
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  How many subscriptions do you currently have?
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {["1-5 subscriptions", "6-10 subscriptions", "11-20 subscriptions", "20+ subscriptions"].map(
-                    (option) => (
-                      <button
-                        key={option}
-                        onClick={() => setFormData({ ...formData, toolsCount: option })}
-                        className={`p-4 rounded-lg border-2 font-medium transition-all ${
-                          formData.toolsCount === option
-                            ? "border-gray-900 bg-gray-50 text-gray-900"
-                            : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ),
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">How many of those are AI tools?</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {["None", "1-3 AI tools", "4-7 AI tools", "8+ AI tools"].map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => setFormData({ ...formData, aiToolsCount: option })}
-                      className={`p-4 rounded-lg border-2 font-medium transition-all ${
-                        formData.aiToolsCount === option
-                          ? "border-gray-900 bg-gray-50 text-gray-900"
-                          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Approximate monthly spend on all subscriptions
-                </label>
-                <input
-                  type="text"
-                  value={formData.monthlySpend}
-                  onChange={(e) => setFormData({ ...formData, monthlySpend: e.target.value })}
-                  placeholder="e.g., $200"
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
-                />
-                <p className="text-xs text-gray-500 mt-2">This helps us provide better insights.</p>
-              </div>
-            </div>
-          )}
-
           {step === 4 && (
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -839,7 +710,7 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
             </div>
           )}
 
-          {step === 6 && (
+          {step === 5 && (
             <div className="space-y-6">
               <div className="bg-[#007A5C]/10 p-4 rounded-lg border border-[#007A5C]/20">
                 <div className="flex items-start gap-3">
@@ -910,7 +781,7 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
             </div>
           )}
 
-          {step === 7 && (
+          {step === 6 && (
             <div className="space-y-4">
               <button
                 onClick={() => handleModeSelection("individual")}
@@ -949,17 +820,6 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
 
         {/* Footer Buttons */}
         <div className="space-y-3">
-          {(step === 1 || step === 2) && (
-            <button
-              onClick={handleNext}
-              disabled={!isStepValid()}
-              className="w-full py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
-            >
-              Continue
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          )}
-
           {step === 3 && !isScanning && (
             <>
               <button
@@ -976,17 +836,6 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
           )}
 
           {step === 4 && (
-            <button
-              onClick={handleNext}
-              disabled={!isStepValid()}
-              className="w-full py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
-            >
-              Continue
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          )}
-
-          {step === 5 && (
             <>
               <button
                 onClick={handleNext}
@@ -1004,7 +853,7 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
             </>
           )}
 
-          {step === 6 && (
+          {step === 5 && (
             <>
               <button
                 onClick={handleNext}
@@ -1020,6 +869,17 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
                 Skip for now - I'll add them later
               </button>
             </>
+          )}
+
+          {step !== 3 && step !== 4 && step !== 5 && step !== 6 && (
+            <button
+              onClick={handleNext}
+              disabled={!isStepValid()}
+              className="w-full py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+            >
+              Continue
+              <ArrowRight className="w-4 h-4" />
+            </button>
           )}
         </div>
       </div>
