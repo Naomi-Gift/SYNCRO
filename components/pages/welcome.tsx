@@ -131,11 +131,11 @@ export default function WelcomePage({ onSelectMode, darkMode }: WelcomePageProps
 
           {/* Enterprise Card */}
           <button
-            onClick={() => onSelectMode("enterprise")}
-            className={`p-8 rounded-xl border-2 transition-all hover:scale-105 ${
+            disabled
+            className={`p-8 rounded-xl border-2 transition-all opacity-60 cursor-not-allowed relative ${
               darkMode
-                ? "bg-[#2D3748] border-[#374151] hover:border-[#E86A33]"
-                : "bg-white border-gray-200 hover:border-[#E86A33]"
+                ? "bg-[#2D3748] border-[#374151]"
+                : "bg-white border-gray-200"
             }`}
           >
             <div className="flex flex-col items-center text-center">
@@ -146,9 +146,16 @@ export default function WelcomePage({ onSelectMode, darkMode }: WelcomePageProps
               >
                 <Building2 className={`w-8 h-8 ${darkMode ? "text-white" : "text-white"}`} />
               </div>
-              <h3 className={`text-xl font-bold mb-2 ${darkMode ? "text-[#F9F6F2]" : "text-[#1E2A35]"}`}>
-                Continue as Enterprise
-              </h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className={`text-xl font-bold ${darkMode ? "text-[#F9F6F2]" : "text-[#1E2A35]"}`}>
+                  Continue as Enterprise
+                </h3>
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                  darkMode ? "bg-[#FFD166] text-[#1E2A35]" : "bg-[#FFD166] text-[#1E2A35]"
+                }`}>
+                  Coming Soon
+                </span>
+              </div>
               <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                 Manage team subscriptions and permissions
               </p>

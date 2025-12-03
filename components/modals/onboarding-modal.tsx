@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Mail, Shield, Zap, Plus, X, Key, Eye, EyeOff } from "lucide-react"
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Mail, Shield, Zap, Plus, X } from "lucide-react"
 
 export default function OnboardingModal({ onClose, onModeSelect, darkMode = false }) {
   const [step, setStep] = useState(1)
@@ -12,13 +12,11 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<Set<number>>(new Set())
   const [connectedEmails, setConnectedEmails] = useState<string[]>([])
   const [showAddAnotherEmail, setShowAddAnotherEmail] = useState(false)
-  const [apiKeys, setApiKeys] = useState<Record<string, { key: string; show: boolean }>>({})
 
   const [formData, setFormData] = useState({
     name: "",
     role: "",
-    toolsCount: "",
-    aiToolsCount: "", // Added separate field for AI tools
+    recentStatus: "",
     monthlySpend: "",
     budgetLimit: "",
     budgetAlert: true,
@@ -105,7 +103,7 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
       setStep(3)
     } else if (step === 2 && (connectionMethod === "plaid" || connectionMethod === "manual")) {
       setStep(4)
-    } else if (step < 6) {
+    } else if (step < 5) {
       setStep(step + 1)
     }
   }
@@ -130,39 +128,14 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
     .reduce((sum, sub) => sum + sub.cost, 0)
 
   const isStepValid = () => {
-    if (step === 1) return formData.name && formData.role && formData.toolsCount && formData.monthlySpend
+    if (step === 1) return formData.name && formData.role && formData.recentStatus && formData.monthlySpend
     if (step === 2) return connectionMethod !== null
     if (step === 3) return !isScanning && foundSubscriptions.length > 0
     if (step === 4) return true
-    if (step === 5) return true
     return false
   }
 
-  const progressDots = [1, 2, 3, 4, 5]
-
-  const aiTools = foundSubscriptions.filter(
-    (sub) => sub.icon === "🤖" || sub.icon === "🖼️" || sub.icon === "💻" || sub.icon === "✨" || sub.icon === "🔍",
-  )
-
-  const handleToggleApiKeyVisibility = (toolName: string) => {
-    setApiKeys((prev) => ({
-      ...prev,
-      [toolName]: {
-        ...prev[toolName],
-        show: !prev[toolName]?.show,
-      },
-    }))
-  }
-
-  const handleApiKeyChange = (toolName: string, value: string) => {
-    setApiKeys((prev) => ({
-      ...prev,
-      [toolName]: {
-        key: value,
-        show: prev[toolName]?.show || false,
-      },
-    }))
-  }
+  const progressDots = [1, 2, 3, 4]
 
   const getLeftContent = () => {
     if (step === 1) {
@@ -188,12 +161,6 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
         description:
           "We're creating your personalized subscription management dashboard with smart insights and recommendations.",
         showProgress: true,
-      }
-    } else if (step === 5) {
-      return {
-        title: "Enable Deep\nUsage Tracking",
-        description:
-          "Connect your AI tool API keys to track actual usage, get accurate cost predictions, and receive alerts when you're not using paid tools.",
       }
     } else {
       return {
@@ -281,10 +248,10 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
             >
               <ArrowLeft className="w-5 h-5 text-gray-700" />
             </button>
-            {step <= 5 && <span className="text-sm text-gray-500">Step {step} out of 5</span>}
+            {step <= 4 && <span className="text-sm text-gray-500">Step {step} out of 4</span>}
           </div>
 
-          {step <= 5 && (
+          {step <= 4 && (
             <div className="flex gap-2 mb-8">
               {progressDots.map((dot) => (
                 <div
@@ -300,8 +267,7 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
             {step === 2 && "How would you like to connect?"}
             {step === 3 && "Found Your Subscriptions"}
             {step === 4 && "Customise Your Experience"}
-            {step === 5 && "Connect Your AI Tools"}
-            {step === 6 && "Choose Your Account Type"}
+            {step === 5 && "Choose Your Account Type"}
           </h3>
           <p className="text-gray-600 text-base">
             {step === 1 && "First tell us a bit about yourself to personalise your experience"}
@@ -309,8 +275,7 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
             {step === 3 &&
               `Great! We discovered ${foundSubscriptions.length} subscriptions across ${connectedEmails.length} email${connectedEmails.length !== 1 ? "s" : ""}. Review and confirm below.`}
             {step === 4 && "Let's personalise your dashboard with smart settings and preferences."}
-            {step === 5 && "Add API keys to track actual usage and get accurate insights. This step is optional."}
-            {step === 6 && "Select the plan that works best for you"}
+            {step === 5 && "Select the plan that works best for you"}
           </p>
         </div>
 
@@ -342,16 +307,16 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  How many subscriptions do you currently have?
+                  What's your recent subscription status?
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  {["1-5 subscriptions", "6-10 subscriptions", "11-20 subscriptions", "20+ subscriptions"].map(
+                  {["Just getting started", "Managing a few", "Have many subscriptions", "Looking to optimize"].map(
                     (option) => (
                       <button
                         key={option}
-                        onClick={() => setFormData({ ...formData, toolsCount: option })}
+                        onClick={() => setFormData({ ...formData, recentStatus: option })}
                         className={`p-4 rounded-lg border-2 font-medium transition-all ${
-                          formData.toolsCount === option
+                          formData.recentStatus === option
                             ? "border-gray-900 bg-gray-50 text-gray-900"
                             : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
                         }`}
@@ -360,25 +325,6 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
                       </button>
                     ),
                   )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">How many of those are AI tools?</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {["None", "1-3 AI tools", "4-7 AI tools", "8+ AI tools"].map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => setFormData({ ...formData, aiToolsCount: option })}
-                      className={`p-4 rounded-lg border-2 font-medium transition-all ${
-                        formData.aiToolsCount === option
-                          ? "border-gray-900 bg-gray-50 text-gray-900"
-                          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
                 </div>
               </div>
 
@@ -711,77 +657,6 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
           )}
 
           {step === 5 && (
-            <div className="space-y-6">
-              <div className="bg-[#007A5C]/10 p-4 rounded-lg border border-[#007A5C]/20">
-                <div className="flex items-start gap-3">
-                  <Key className="w-5 h-5 text-[#007A5C] mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Why connect API keys?</h4>
-                    <ul className="text-sm text-gray-700 space-y-1">
-                      <li>• Track actual API usage and costs in real-time</li>
-                      <li>• Get alerts when you're paying for unused tools</li>
-                      <li>• Accurate cost predictions based on usage patterns</li>
-                      <li>• Identify optimization opportunities</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {aiTools.length > 0 ? (
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-700">
-                    We found {aiTools.length} AI tool{aiTools.length !== 1 ? "s" : ""} in your subscriptions
-                  </h4>
-                  {aiTools.map((tool) => (
-                    <div key={tool.id} className="bg-white p-4 rounded-lg border border-gray-200">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center text-xl">
-                          {tool.icon}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">{tool.name}</p>
-                          <p className="text-xs text-gray-600">${tool.cost}/month</p>
-                        </div>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type={apiKeys[tool.name]?.show ? "text" : "password"}
-                          value={apiKeys[tool.name]?.key || ""}
-                          onChange={(e) => handleApiKeyChange(tool.name, e.target.value)}
-                          placeholder="Enter API key (optional)"
-                          className="w-full px-4 py-2 pr-10 bg-[#F9F6F2] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 text-sm"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleToggleApiKeyVisibility(tool.name)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                        >
-                          {apiKeys[tool.name]?.show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Find your API key in {tool.name} settings → API or Developer section
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-gray-100 p-6 rounded-lg text-center">
-                  <p className="text-gray-600">No AI tools detected yet. You can add API keys later from Settings.</p>
-                </div>
-              )}
-
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <p className="text-sm text-gray-700 font-medium mb-1">🔒 Your API keys are secure</p>
-                <p className="text-xs text-gray-600">
-                  All API keys are encrypted and stored securely. We only use them to fetch usage data - we never make
-                  changes to your accounts or access sensitive information.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {step === 6 && (
             <div className="space-y-4">
               <button
                 onClick={() => handleModeSelection("individual")}
@@ -801,12 +676,18 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
 
               <button
                 onClick={() => handleModeSelection("enterprise")}
-                className="w-full p-6 border-2 border-gray-300 rounded-xl hover:border-[#FFD166] hover:bg-[#FFD166]/10 transition-all text-left"
+                disabled
+                className="w-full p-6 border-2 border-gray-300 rounded-xl opacity-60 cursor-not-allowed text-left relative"
               >
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-[#1E2A35] rounded-lg flex items-center justify-center text-2xl">🏢</div>
-                  <div>
-                    <h5 className="font-semibold text-gray-900 mb-1">Enterprise</h5>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h5 className="font-semibold text-gray-900">Enterprise</h5>
+                      <span className="px-2 py-0.5 bg-[#FFD166] text-[#1E2A35] text-xs font-medium rounded">
+                        Coming Soon
+                      </span>
+                    </div>
                     <p className="text-sm text-gray-600">
                       For teams and organizations managing multiple subscriptions across team members
                     </p>
@@ -853,25 +734,7 @@ export default function OnboardingModal({ onClose, onModeSelect, darkMode = fals
             </>
           )}
 
-          {step === 5 && (
-            <>
-              <button
-                onClick={handleNext}
-                className="w-full py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
-              >
-                {Object.values(apiKeys).some((k) => k.key) ? "Continue with API Keys" : "Continue"}
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
-                onClick={handleNext}
-                className="w-full py-3 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors border border-gray-300"
-              >
-                Skip for now - I'll add them later
-              </button>
-            </>
-          )}
-
-          {step !== 3 && step !== 4 && step !== 5 && step !== 6 && (
+          {step !== 3 && step !== 4 && step !== 5 && (
             <button
               onClick={handleNext}
               disabled={!isStepValid()}
