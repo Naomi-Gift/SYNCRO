@@ -1,18 +1,23 @@
-# AI subscription dashboard
+Self-Custodial Subscription Manager
+A decentralized subscription management platform that enables users to control recurring payments directly from their own wallet. Users can track, approve, pause, and fund subscriptions like Netflix, YouTube, Claude, Midjourney, and more, without giving control of their payment method to any centralized service. Payments are executed via a crypto-card-funded agent to handle Web2 billing.
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/calebuxs-projects/v0-ai-subscription-dashboard)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/XC0a1rPyUqt)
-
-## Overview
-
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
-
-## Deployment
-
-Your project is live at:
+✨ Key Features
+Full self-custody: users maintain complete control of funds
+Unified dashboard for managing all subscriptions
+AI-powered agent to automate payment approvals and execution
+Crypto-to-card settlement layer for legacy services
+Price-change protection with spending caps
+Push notifications for approvals and reminders
+Manual subscription entry for unsupported platforms
+🧠 High-Level Workflow
+User connects a Web3 wallet.
+User adds subscriptions (auto-detected or manually entered).
+User funds a Subscription Vault with USDC or stablecoins.
+When a bill is due:
+System sends approval request
+If approved, the agent loads exact funds to a crypto card and pays the provider
+Or uses x402 to complete an on-chain settlement flow
+Dashboard updates balance, renewal date, and spend insights.
 
 **[https://vercel.com/calebuxs-projects/v0-ai-subscription-dashboard](https://vercel.com/calebuxs-projects/v0-ai-subscription-dashboard)**
 
